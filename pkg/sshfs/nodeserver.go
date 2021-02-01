@@ -94,17 +94,29 @@ func (ns *nodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublis
 func (ns *nodeServer) NodeUnpublishVolume(ctx context.Context, req *csi.NodeUnpublishVolumeRequest) (*csi.NodeUnpublishVolumeResponse, error) {
     targetPath := req.GetTargetPath()
     notMnt, err := mount.New("").IsLikelyNotMountPoint(targetPath)
+    ignoreNotMnt := false
 
     if err != nil {
-        if os.IsNotExist(err) {
-            return nil, status.Error(codes.NotFound, "Targetpath not found")
-        } else if pathError, ok := err.(*os.PathError); ok && (*pathError).Err.Error() == "transport endpoint is not connected" {
-            glog.Infof("transport endpoint is not connected: %s", (*pathError).Path)
+        if pathError, ok := err.(*os.PathError); ok {
+        // From the docs: [The NodeUnpublishVolume] operation MUST be idempotent. If this RPC failed, or the CO does not know if it failed or not, it can choose to call NodeUnpublishVolume again.
+        // Same for publishing actually.
+            if os.IsNotExist(err) {
+//                 return nil, status.Error(codes.NotFound, "Targetpath not found")
+                glog.Infof("Targetpath not found: %s", (*pathError).Path)
+            } else if (*pathError).Err.Error() == "transport endpoint is not connected" {
+                glog.Infof("transport endpoint is not connected: %s", (*pathError).Path)
+            } else {
+                return nil, status.Error(codes.Internal, err.Error())
+            }
+            if _, ok := ns.mounts[req.VolumeId]; !ok {
+                ignoreNotMnt = true
+                glog.Infof("And volume appears unmounted.")
+            }
         } else {
             return nil, status.Error(codes.Internal, err.Error())
         }
     }
-    if notMnt {
+    if notMnt && !ignoreNotMnt {
         return nil, status.Error(codes.NotFound, "Volume not mounted")
     }
 
