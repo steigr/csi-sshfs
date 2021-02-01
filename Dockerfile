@@ -1,7 +1,7 @@
 FROM golang:1.12-alpine3.9 AS  build-env
 RUN apk add --no-cache git
 
-ENV CGO_ENABLED=0, GO111MODULE=on
+ENV CGO_ENABLED=0 GO111MODULE=on
 WORKDIR /go/src/github.com/Patricol/csi-sshfs
 
 ADD . /go/src/github.com/Patricol/csi-sshfs
