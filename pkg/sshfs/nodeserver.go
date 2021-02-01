@@ -220,6 +220,7 @@ func Mount(user string, host string, port string, dir string, target string, pri
 		return fmt.Errorf("mounting failed: %v cmd: '%s %s' output: %q",
 			err, mountCmd, strings.Join(mountArgs, " "), string(out))
 	}
+	glog.Infof("finished mount command cmd=%s, args=%s", mountCmd, mountArgs)
 
 	return nil
 }
