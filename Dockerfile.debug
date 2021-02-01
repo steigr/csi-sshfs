@@ -1,6 +1,6 @@
 FROM golang:1.15-alpine AS build-env
 RUN apk add --no-cache git \
- && go get github.com/derekparker/delve/cmd/dlv
+ && go get github.com/go-delve/delve/cmd/dlv
 
 ENV CGO_ENABLED=0
 WORKDIR /go/src/github.com/Patricol/csi-sshfs
@@ -9,8 +9,8 @@ COPY . .
 
 RUN go mod download
 RUN export BUILD_TIME=$(date -R) \
- && export VERSION=$(cat /go/src/github.com/Patricol/csi-sshfs/version.txt 2&> /dev/null)
-RUN go build -o /csi-sshfs -ldflags "-X 'github.com/Patricol/csi-sshfs/pkg/sshfs.BuildTime=${BUILD_TIME}' -X 'github.com/Patricol/csi-sshfs/pkg/sshfs.Version=${VERSION}'" -gcflags "all=-N -l" github.com/Patricol/csi-sshfs/cmd/csi-sshfs
+ && export VERSION=$(cat /go/src/github.com/Patricol/csi-sshfs/version.txt 2&> /dev/null) \
+ && go build -o /csi-sshfs -ldflags "-X 'github.com/Patricol/csi-sshfs/pkg/sshfs.BuildTime=${BUILD_TIME}' -X 'github.com/Patricol/csi-sshfs/pkg/sshfs.Version=${VERSION}'" -gcflags "all=-N -l" github.com/Patricol/csi-sshfs/cmd/csi-sshfs
 
 FROM alpine:latest
 EXPOSE 40000
