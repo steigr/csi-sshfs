@@ -98,6 +98,8 @@ func (ns *nodeServer) NodeUnpublishVolume(ctx context.Context, req *csi.NodeUnpu
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil, status.Error(codes.NotFound, "Targetpath not found")
+		} else if pathError, ok := err.(*os.PathError); ok && (*pathError).Err.Error() == "transport endpoint is not connected" {
+			glog.Infof("transport endpoint is not connected: %s", (*pathError).Path)
 		} else {
 			return nil, status.Error(codes.Internal, err.Error())
 		}
