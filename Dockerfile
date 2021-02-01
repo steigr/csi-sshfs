@@ -1,8 +1,8 @@
-FROM golang:1.12-alpine3.9 AS build-env
+FROM golang:1.15-alpine3.13 AS build-env
 RUN apk add --no-cache git
 
 
-ENV CGO_ENABLED=0 GO111MODULE=on
+ENV CGO_ENABLED=0
 WORKDIR /go/src/github.com/Patricol/csi-sshfs
 
 COPY . /go/src/github.com/Patricol/csi-sshfs
@@ -12,7 +12,7 @@ RUN export BUILD_TIME=$(date -R) \
  && export VERSION=$(cat /go/src/github.com/Patricol/csi-sshfs/version.txt 2&> /dev/null) \
  && go build -o /csi-sshfs -ldflags "-X 'github.com/Patricol/csi-sshfs/pkg/sshfs.BuildTime=${BUILD_TIME}' -X 'github.com/Patricol/csi-sshfs/pkg/sshfs.Version=${VERSION}'" github.com/Patricol/csi-sshfs/cmd/csi-sshfs
 
-FROM alpine:3.9
+FROM alpine:3.13
 
 RUN apk add --no-cache ca-certificates sshfs findmnt
 
