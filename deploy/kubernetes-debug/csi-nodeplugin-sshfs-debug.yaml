@@ -23,7 +23,7 @@ spec:
             capabilities:
               add: ["SYS_ADMIN","SYS_PTRACE"]
             allowPrivilegeEscalation: true
-          image: chrfritz/csi-nodeplugin-sshfs:debug-latest
+          image: patricol/csi-nodeplugin-sshfs:debug-latest
           command:
             - "/dlv"
             - "--listen=:40000"
