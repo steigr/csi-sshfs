@@ -5,7 +5,7 @@ RUN apk add --no-cache git \
 ENV CGO_ENABLED=0 GO111MODULE=on
 WORKDIR /go/src/github.com/Patricol/csi-sshfs
 
-ADD . /go/src/github.com/Patricol/csi-sshfs
+COPY . /go/src/github.com/Patricol/csi-sshfs
 
 RUN go mod download
 RUN export BUILD_TIME=$(date -R) \
