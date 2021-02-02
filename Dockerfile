@@ -5,7 +5,7 @@ RUN apk add --no-cache git
 ENV CGO_ENABLED=0
 WORKDIR /go/src/github.com/Patricol/csi-sshfs
 
-COPY go.mod go.sum .
+COPY go.mod go.sum ./
 
 RUN go mod download
 COPY . .
