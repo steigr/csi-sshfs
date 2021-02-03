@@ -74,3 +74,20 @@ spec:
     persistentVolumeClaim:
       claimName: data-sshfs
 ```
+```
+# kubectl -n csi-sshfs rollout restart daemonset.apps/csi-nodeplugin-sshfs daemonset.apps/csi-controller-sshfs
+# kubectl -n csi-sshfs logs -llog_group=csi-sshfs -f --all-containers --prefix --tail=-1
+# dlv connect 192.168.8.41:31041
+# dlv connect 192.168.8.41:31040
+# kubectl -n cattle-system get pods -l app=rancher --no-headers -o custom-columns=name:.metadata.name | while read rancherpod; do kubectl -n cattle-system exec $rancherpod -c rancher -- loglevel --set debug; done
+# kubectl -n cattle-system logs -lapp=rancher -f --all-containers --prefix --tail=-1
+# kubectl -n cattle-system get pods -l app=cattle-agent --no-headers -o custom-columns=name:.metadata.name | while read rancherpod; do kubectl -n cattle-system exec $rancherpod -c rancher -- loglevel --set debug; done
+# kubectl -n cattle-system get pods -l app=cattle-cluster-agent --no-headers -o custom-columns=name:.metadata.name | while read rancherpod; do kubectl -n cattle-system exec $rancherpod -c rancher -- loglevel --set debug; done
+# kubectl -n cattle-system logs -lapp=cattle-agent -f --all-containers --prefix --tail=-1
+# kubectl -n cattle-system logs -lapp=cattle-cluster-agent -f --all-containers --prefix --tail=-1
+
+# utils call happens before the volume creation is given; maybe library is too old? check it out.
+# grpc types are probably wrong. single vs list. got a double once.
+# kk it's like 100% the go packages being pinned.
+# TODO replace glog with klog https://pkg.go.dev/k8s.io/klog
+```
