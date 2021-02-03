@@ -157,9 +157,8 @@ func getPublicKeySecret(secretName string) (*v1.Secret, error) {
         return nil, status.Errorf(codes.Internal, "can not create kubernetes client: %s", e)
     }
 
-    secret, e := clientset.CoreV1().
-        Secrets(namespace).
-        Get(name, metav1.GetOptions{})
+    ctx := context.TODO() // TODO not sure what kind of context to use
+    secret, e := clientset.CoreV1().Secrets(namespace).Get(ctx, name, metav1.GetOptions{})
 
     if e != nil {
         return nil, status.Errorf(codes.Internal, "can not get secret %s: %s", secretName, e)
