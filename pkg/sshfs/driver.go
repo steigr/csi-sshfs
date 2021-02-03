@@ -11,7 +11,7 @@ type driver struct {
     endpoint  string
 
     //ids *identityServer
-    ns    *nodeServer
+    ns    *NodeServer
     cap   []*csi.VolumeCapability_AccessMode
     cscap []*csi.ControllerServiceCapability
 }
@@ -44,8 +44,8 @@ func NewDriver(nodeID, endpoint string) *driver {
     return d
 }
 
-func NewNodeServer(d *driver) *nodeServer {
-    return &nodeServer{
+func NewNodeServer(d *driver) *NodeServer {
+    return &NodeServer{
         DefaultNodeServer: csicommon.NewDefaultNodeServer(d.csiDriver),
         mounts:            map[string]*mountPoint{},
     }
