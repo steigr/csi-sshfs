@@ -7,7 +7,8 @@ require (
 	github.com/spf13/cobra v1.1.1
 	golang.org/x/net v0.0.0-20210119194325-5f4716e94777
 	google.golang.org/grpc v1.35.0
-	k8s.io/api v0.19.7
-	k8s.io/apimachinery v0.19.7
-	k8s.io/client-go v0.19.7
+	k8s.io/api v0.20.2
+	k8s.io/apimachinery v0.20.2
+	k8s.io/client-go v0.20.2
+	k8s.io/mount-utils v0.20.2
 )
