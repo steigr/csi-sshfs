@@ -108,8 +108,8 @@ func (ns *nodeServer) NodeUnpublishVolume(ctx context.Context, req *csi.NodeUnpu
     if notMnt {
         glog.Infof("Volume not mounted")
     }
-
-    err = util.UnmountPath(req.GetTargetPath(), mount.New(""))
+// https://github.com/kubernetes/kubernetes/blob/v1.13.12/pkg/volume/util/util.go#L132
+    err = mount.CleanupMountPoint(req.GetTargetPath(), mount.New(""), false)
     if err != nil {
         return nil, status.Error(codes.Internal, err.Error())
     }
