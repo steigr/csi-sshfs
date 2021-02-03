@@ -4,7 +4,7 @@ default:
 	echo Choose an option
 
 deps-clean:
-	rm go.sum
+	rm -f go.sum
 	cp -a original_go.mod go.mod
 
 deps: deps-clean
@@ -30,3 +30,5 @@ build-debug-with-cache:
 
 push-debug: build-debug-with-cache
 	docker push patricol/csi-sshfs:debug
+
+push-all: push push-debug
