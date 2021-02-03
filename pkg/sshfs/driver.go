@@ -3,7 +3,7 @@ package sshfs
 import (
     "github.com/container-storage-interface/spec/lib/go/csi"
     "github.com/golang/glog"
-    "github.com/kubernetes-csi/drivers/pkg/csi-common"
+    "github.com/Patricol/drivers/pkg/csi-common"
 )
 
 type driver struct {
