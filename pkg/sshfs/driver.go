@@ -2,7 +2,7 @@ package sshfs
 
 import (
     "github.com/container-storage-interface/spec/lib/go/csi"
-    "github.com/golang/glog"
+    "k8s.io/klog"
     "github.com/Patricol/drivers/pkg/csi-common" // TODO create default servers here instead of importing this fork.
 )
 
@@ -26,7 +26,7 @@ var (
 )
 
 func NewDriver(nodeID, endpoint string) *driver {
-    glog.Infof("Starting new %s driver in version %s built %s", driverName, Version, BuildTime)
+    klog.Infof("Starting new %s driver in version %s built %s", driverName, Version, BuildTime)
 
     d := &driver{}
 

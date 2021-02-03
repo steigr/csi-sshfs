@@ -3,6 +3,7 @@ package main
 import (
     "flag"
     "fmt"
+    "k8s.io/klog"
     "github.com/Patricol/csi-sshfs/pkg/sshfs"
     "os"
 
@@ -14,11 +15,10 @@ var (
     nodeID   string
 )
 
-func init() {
-    flag.Set("logtostderr", "true")
-}
-
 func main() {
+	klogFlags := flag.NewFlagSet("klog", flag.ExitOnError)
+	klogFlags.Set("logtostderr", "true")
+	klog.InitFlags(klogFlags)
 
     flag.CommandLine.Parse([]string{})
 

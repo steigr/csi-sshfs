@@ -89,5 +89,5 @@ spec:
 # utils call happens before the volume creation is given; maybe library is too old? check it out.
 # grpc types are probably wrong. single vs list. got a double once.
 # kk it's like 100% the go packages being pinned.
-# TODO replace glog with klog https://pkg.go.dev/k8s.io/klog
+TODO add more things from the spec: https://github.com/container-storage-interface/spec/releases
 ```

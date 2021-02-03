@@ -2,7 +2,7 @@ package sshfs
 
 import (
     "fmt"
-    "github.com/golang/glog"
+    "k8s.io/klog"
     "io/ioutil"
     "k8s.io/api/core/v1"
     metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -98,13 +98,13 @@ func (ns *nodeServer) NodeUnpublishVolume(ctx context.Context, req *csi.NodeUnpu
         if pathError, ok := err.(*os.PathError); ok {
         // From the docs: [The NodeUnpublishVolume] operation MUST be idempotent. If this RPC failed, or the CO does not know if it failed or not, it can choose to call NodeUnpublishVolume again.
         // Same for publishing actually.
-            glog.Infof("Volume may already be gone, %s: %s", (*pathError).Err.Error(), (*pathError).Path)
+            klog.Infof("Volume may already be gone, %s: %s", (*pathError).Err.Error(), (*pathError).Path)
         } else {
             return nil, status.Error(codes.Internal, err.Error())
         }
     }
     if notMnt {
-        glog.Infof("Volume not mounted")
+        klog.Infof("Volume not mounted")
     }
 // https://github.com/kubernetes/kubernetes/blob/v1.13.12/pkg/volume/util/util.go#L132
     err = mount.CleanupMountPoint(req.GetTargetPath(), mount.New(""), false)
@@ -117,7 +117,7 @@ func (ns *nodeServer) NodeUnpublishVolume(ctx context.Context, req *csi.NodeUnpu
             return nil, status.Error(codes.Internal, err.Error())
         }
         delete(ns.mounts, point.VolumeId)
-        glog.Infof("successfully unmount volume: %s", point)
+        klog.Infof("successfully unmount volume: %s", point)
     }
 
     return &csi.NodeUnpublishVolumeResponse{}, nil
@@ -213,7 +213,7 @@ func Mount(user string, host string, port string, dir string, target string, pri
         return err
     }
 
-    glog.Infof("executing mount command cmd=%s, args=%s", mountCmd, mountArgs)
+    klog.Infof("executing mount command cmd=%s, args=%s", mountCmd, mountArgs)
 
     out, err := exec.Command(mountCmd, mountArgs...).CombinedOutput()
     if err != nil {
