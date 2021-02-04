@@ -4,7 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/Patricol/csi-sshfs/pkg/sshfs"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 	"os"
 
 	"github.com/spf13/cobra"

@@ -3,7 +3,7 @@ package sshfs
 import (
 	"context"
 	"fmt"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 	"strings"
 
 	"github.com/kubernetes-csi/csi-lib-utils/protosanitizer"
