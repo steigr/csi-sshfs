@@ -35,7 +35,7 @@ type mountPoint struct {
 	IdentityFile string
 }
 
-func (ns *NodeServer) NodeGetInfo(ctx context.Context, req *csi.NodeGetInfoRequest) (*csi.NodeGetInfoResponse, error) {
+func (ns *NodeServer) NodeGetInfo(ctx context.Context, request *csi.NodeGetInfoRequest) (*csi.NodeGetInfoResponse, error) {
 	klog.V(5).Infof("Using default NodeGetInfo")
 
 	return &csi.NodeGetInfoResponse{
@@ -43,7 +43,7 @@ func (ns *NodeServer) NodeGetInfo(ctx context.Context, req *csi.NodeGetInfoReque
 	}, nil
 }
 
-func (ns *NodeServer) NodeGetCapabilities(ctx context.Context, req *csi.NodeGetCapabilitiesRequest) (*csi.NodeGetCapabilitiesResponse, error) {
+func (ns *NodeServer) NodeGetCapabilities(ctx context.Context, request *csi.NodeGetCapabilitiesRequest) (*csi.NodeGetCapabilitiesResponse, error) {
 	klog.V(5).Infof("Using default NodeGetCapabilities")
 
 	return &csi.NodeGetCapabilitiesResponse{
@@ -59,8 +59,8 @@ func (ns *NodeServer) NodeGetCapabilities(ctx context.Context, req *csi.NodeGetC
 	}, nil
 }
 
-func (ns *NodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublishVolumeRequest) (*csi.NodePublishVolumeResponse, error) {
-	targetPath := req.GetTargetPath()
+func (ns *NodeServer) NodePublishVolume(ctx context.Context, request *csi.NodePublishVolumeRequest) (*csi.NodePublishVolumeResponse, error) {
+	targetPath := request.GetTargetPath()
 	notMnt, e := mount.New("").IsLikelyNotMountPoint(targetPath)
 	if e != nil {
 		if os.IsNotExist(e) {
@@ -77,24 +77,24 @@ func (ns *NodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublis
 		return &csi.NodePublishVolumeResponse{}, nil
 	}
 
-	mountOptions := req.GetVolumeCapability().GetMount().GetMountFlags()
-	if req.GetReadonly() {
+	mountOptions := request.GetVolumeCapability().GetMount().GetMountFlags()
+	if request.GetReadonly() {
 		mountOptions = append(mountOptions, "ro")
 	}
-	if e := validateVolumeContext(req); e != nil {
+	if e := validateVolumeContext(request); e != nil {
 		return nil, e
 	}
 
-	server := req.GetVolumeContext()["server"]
-	port := req.GetVolumeContext()["port"]
+	server := request.GetVolumeContext()["server"]
+	port := request.GetVolumeContext()["port"]
 	if len(port) == 0 {
 		port = "22"
 	}
 
-	user := req.GetVolumeContext()["user"]
-	ep := req.GetVolumeContext()["share"]
-	privateKey := req.GetVolumeContext()["privateKey"]
-	sshOpts := req.GetVolumeContext()["sshOpts"]
+	user := request.GetVolumeContext()["user"]
+	ep := request.GetVolumeContext()["share"]
+	privateKey := request.GetVolumeContext()["privateKey"]
+	sshOpts := request.GetVolumeContext()["sshOpts"]
 
 	secret, e := getPublicKeySecret(privateKey)
 	if e != nil {
@@ -115,12 +115,12 @@ func (ns *NodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublis
 		}
 		return nil, status.Error(codes.Internal, e.Error())
 	}
-	ns.mounts[req.VolumeId] = &mountPoint{IdentityFile: privateKeyPath, MountPath: targetPath, VolumeId: req.VolumeId}
+	ns.mounts[request.VolumeId] = &mountPoint{IdentityFile: privateKeyPath, MountPath: targetPath, VolumeId: request.VolumeId}
 	return &csi.NodePublishVolumeResponse{}, nil
 }
 
-func (ns *NodeServer) NodeUnpublishVolume(ctx context.Context, req *csi.NodeUnpublishVolumeRequest) (*csi.NodeUnpublishVolumeResponse, error) {
-	targetPath := req.GetTargetPath()
+func (ns *NodeServer) NodeUnpublishVolume(ctx context.Context, request *csi.NodeUnpublishVolumeRequest) (*csi.NodeUnpublishVolumeResponse, error) {
+	targetPath := request.GetTargetPath()
 	notMnt, err := mount.New("").IsLikelyNotMountPoint(targetPath)
 
 	if err != nil {
@@ -136,11 +136,11 @@ func (ns *NodeServer) NodeUnpublishVolume(ctx context.Context, req *csi.NodeUnpu
 		klog.Infof("Volume not mounted")
 	}
 	// https://github.com/kubernetes/kubernetes/blob/v1.13.12/pkg/volume/util/util.go#L132
-	err = mount.CleanupMountPoint(req.GetTargetPath(), mount.New(""), false)
+	err = mount.CleanupMountPoint(request.GetTargetPath(), mount.New(""), false)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-	if point, ok := ns.mounts[req.VolumeId]; ok {
+	if point, ok := ns.mounts[request.VolumeId]; ok {
 		err := os.Remove(point.IdentityFile)
 		if err != nil {
 			return nil, status.Error(codes.Internal, err.Error())
@@ -152,33 +152,33 @@ func (ns *NodeServer) NodeUnpublishVolume(ctx context.Context, req *csi.NodeUnpu
 	return &csi.NodeUnpublishVolumeResponse{}, nil
 }
 
-func (ns *NodeServer) NodeGetVolumeStats(ctx context.Context, in *csi.NodeGetVolumeStatsRequest) (*csi.NodeGetVolumeStatsResponse, error) {
+func (ns *NodeServer) NodeGetVolumeStats(ctx context.Context, request *csi.NodeGetVolumeStatsRequest) (*csi.NodeGetVolumeStatsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "")
 }
 
-func (ns *NodeServer) NodeExpandVolume(ctx context.Context, in *csi.NodeExpandVolumeRequest) (*csi.NodeExpandVolumeResponse, error) {
+func (ns *NodeServer) NodeExpandVolume(ctx context.Context, request *csi.NodeExpandVolumeRequest) (*csi.NodeExpandVolumeResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "")
 }
 
-func (ns *NodeServer) NodeUnstageVolume(ctx context.Context, req *csi.NodeUnstageVolumeRequest) (*csi.NodeUnstageVolumeResponse, error) {
+func (ns *NodeServer) NodeUnstageVolume(ctx context.Context, request *csi.NodeUnstageVolumeRequest) (*csi.NodeUnstageVolumeResponse, error) {
 	return &csi.NodeUnstageVolumeResponse{}, nil
 }
 
-func (ns *NodeServer) NodeStageVolume(ctx context.Context, req *csi.NodeStageVolumeRequest) (*csi.NodeStageVolumeResponse, error) {
+func (ns *NodeServer) NodeStageVolume(ctx context.Context, request *csi.NodeStageVolumeRequest) (*csi.NodeStageVolumeResponse, error) {
 	return &csi.NodeStageVolumeResponse{}, nil
 }
 
-func validateVolumeContext(req *csi.NodePublishVolumeRequest) error {
-	if _, ok := req.GetVolumeContext()["server"]; !ok {
+func validateVolumeContext(request *csi.NodePublishVolumeRequest) error {
+	if _, ok := request.GetVolumeContext()["server"]; !ok {
 		return status.Errorf(codes.InvalidArgument, "missing volume context value: server")
 	}
-	if _, ok := req.GetVolumeContext()["user"]; !ok {
+	if _, ok := request.GetVolumeContext()["user"]; !ok {
 		return status.Errorf(codes.InvalidArgument, "missing volume context value: user")
 	}
-	if _, ok := req.GetVolumeContext()["share"]; !ok {
+	if _, ok := request.GetVolumeContext()["share"]; !ok {
 		return status.Errorf(codes.InvalidArgument, "missing volume context value: share")
 	}
-	if _, ok := req.GetVolumeContext()["privateKey"]; !ok {
+	if _, ok := request.GetVolumeContext()["privateKey"]; !ok {
 		return status.Errorf(codes.InvalidArgument, "missing volume context value: privateKey")
 	}
 	return nil
@@ -244,8 +244,7 @@ func Mount(user string, host string, port string, dir string, target string, pri
 		mountArgs = append(mountArgs, "-o", sshOpts)
 	}
 
-	// create target, os.Mkdirall is noop if it exists
-	err := os.MkdirAll(target, 0750)
+	err := os.MkdirAll(target, 0750) // create target, noop if it exists
 	if err != nil {
 		return err
 	}

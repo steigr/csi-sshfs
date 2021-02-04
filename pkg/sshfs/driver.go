@@ -7,19 +7,19 @@ import (
 	"k8s.io/klog"
 	"net"
 	"os"
-	"strings"
 )
 
 func NewDriverInstance(nodeID string, endpoint string) *DriverInstance {
 	klog.Infof("Starting new %s driver in version %s built %s", driverName, Version, BuildTime)
-
-	//     csiDriver.AddVolumeCapabilityAccessModes([]csi.VolumeCapability_AccessMode_Mode{csi.VolumeCapability_AccessMode_MULTI_NODE_MULTI_WRITER}) \\ TODO
+	var vca []*csi.VolumeCapability_AccessMode
+	vca = append(vca, &csi.VolumeCapability_AccessMode{Mode: csi.VolumeCapability_AccessMode_MULTI_NODE_MULTI_WRITER})
 
 	return &DriverInstance{
 		csiDriverName: driverName,
 		version:       Version,
 		nodeID:        nodeID,
 		endpoint:      endpoint,
+		vc:            vca,
 	}
 }
 
@@ -28,13 +28,12 @@ type DriverInstance struct {
 	version       string
 	nodeID        string
 	endpoint      string
-	//     cap   []*csi.VolumeCapability_AccessMode
+	vc            []*csi.VolumeCapability_AccessMode
 }
 
 const (
-	driverName = "csi-sshfs"
-
-//     driverName = "co.p4t.csi.sshfs"
+	//driverName = "csi-sshfs"
+	driverName = "co.p4t.csi.sshfs"
 )
 
 var (
@@ -45,7 +44,7 @@ var (
 func (di *DriverInstance) Run() { // TODO make this non-blocking again? non-blocking might be the issue?
 	srv := grpc.NewServer(grpc.UnaryInterceptor(logGRPC))
 	csi.RegisterIdentityServer(srv, NewIdentityServer(*di))
-	//     csi.RegisterControllerServer(srv, NewControllerServer(*di))
+	//csi.RegisterControllerServer(srv, NewControllerServer(*di))
 	csi.RegisterNodeServer(srv, NewNodeServer(*di))
 
 	proto, addr, err := ParseEndpoint(di.endpoint)
@@ -64,19 +63,4 @@ func (di *DriverInstance) Run() { // TODO make this non-blocking again? non-bloc
 
 	klog.Infof("Listening for connections on address: %#v", listener.Addr())
 	srv.Serve(listener)
-}
-
-func ParseEndpoint(endpoint string) (string, string, error) { // TODO move to utils?
-	if strings.HasPrefix(strings.ToLower(endpoint), "unix://") || strings.HasPrefix(strings.ToLower(endpoint), "tcp://") {
-		s := strings.SplitN(endpoint, "://", 2)
-		protocol := s[0]
-		address := s[1]
-		if address != "" {
-			if protocol == "unix" {
-				address = "/" + address
-			}
-			return protocol, address, nil
-		}
-	}
-	return "", "", fmt.Errorf("invalid endpoint: %v", endpoint)
 }

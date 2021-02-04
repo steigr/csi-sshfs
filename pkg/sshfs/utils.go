@@ -2,7 +2,9 @@ package sshfs
 
 import (
 	"context"
+	"fmt"
 	"k8s.io/klog"
+	"strings"
 
 	"github.com/kubernetes-csi/csi-lib-utils/protosanitizer"
 	"google.golang.org/grpc"
@@ -18,4 +20,19 @@ func logGRPC(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, h
 		klog.V(5).Infof("GRPC response: %s", protosanitizer.StripSecrets(resp))
 	}
 	return resp, err
+}
+
+func ParseEndpoint(endpoint string) (string, string, error) { // TODO move to utils?
+	if strings.HasPrefix(strings.ToLower(endpoint), "unix://") || strings.HasPrefix(strings.ToLower(endpoint), "tcp://") {
+		s := strings.SplitN(endpoint, "://", 2)
+		protocol := s[0]
+		address := s[1]
+		if address != "" {
+			if protocol == "unix" {
+				address = "/" + address
+			}
+			return protocol, address, nil
+		}
+	}
+	return "", "", fmt.Errorf("invalid endpoint: %v", endpoint)
 }
