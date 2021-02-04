@@ -9,12 +9,12 @@ import (
 
 func NewControllerServer(driverInstance DriverInstance) *ControllerServer {
 	return &ControllerServer{
-		instance: &driverInstance,
+		Driver: &driverInstance,
 	}
 }
 
 type ControllerServer struct {
-	instance *DriverInstance
+	Driver *DriverInstance
 }
 
 func (cs *ControllerServer) CreateVolume(ctx context.Context, request *csi.CreateVolumeRequest) (*csi.CreateVolumeResponse, error) {
@@ -46,7 +46,16 @@ func (cs *ControllerServer) GetCapacity(ctx context.Context, request *csi.GetCap
 }
 
 func (cs *ControllerServer) ControllerGetCapabilities(ctx context.Context, request *csi.ControllerGetCapabilitiesRequest) (*csi.ControllerGetCapabilitiesResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "")
+	return &csi.ControllerGetCapabilitiesResponse{
+		Capabilities: []*csi.ControllerServiceCapability{
+			{Type: &csi.ControllerServiceCapability_Rpc{Rpc: &csi.ControllerServiceCapability_RPC{Type: csi.ControllerServiceCapability_RPC_CREATE_DELETE_VOLUME}}},
+			{Type: &csi.ControllerServiceCapability_Rpc{Rpc: &csi.ControllerServiceCapability_RPC{Type: csi.ControllerServiceCapability_RPC_PUBLISH_UNPUBLISH_VOLUME}}},
+			{Type: &csi.ControllerServiceCapability_Rpc{Rpc: &csi.ControllerServiceCapability_RPC{Type: csi.ControllerServiceCapability_RPC_LIST_VOLUMES}}},
+			//{Type: &csi.ControllerServiceCapability_Rpc{Rpc: &csi.ControllerServiceCapability_RPC{Type: csi.ControllerServiceCapability_RPC_GET_CAPACITY}}},
+			//{Type: &csi.ControllerServiceCapability_Rpc{Rpc: &csi.ControllerServiceCapability_RPC{Type: csi.ControllerServiceCapability_RPC_PUBLISH_READONLY}}},
+			// https://github.com/container-storage-interface/spec/blob/396c3332ca1216dea620f64f5f2d60686ae9a0a5/lib/go/csi/csi.pb.go#L183
+		},
+	}, nil
 }
 
 func (cs *ControllerServer) CreateSnapshot(ctx context.Context, request *csi.CreateSnapshotRequest) (*csi.CreateSnapshotResponse, error) {

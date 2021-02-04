@@ -22,7 +22,7 @@ func logGRPC(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, h
 	return resp, err
 }
 
-func ParseEndpoint(endpoint string) (string, string, error) { // TODO move to utils?
+func ParseEndpoint(endpoint string) (string, string, error) {
 	if strings.HasPrefix(strings.ToLower(endpoint), "unix://") || strings.HasPrefix(strings.ToLower(endpoint), "tcp://") {
 		s := strings.SplitN(endpoint, "://", 2)
 		protocol := s[0]

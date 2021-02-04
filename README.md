@@ -75,7 +75,7 @@ spec:
       claimName: data-sshfs
 ```
 ```
-# kubectl -n csi-sshfs rollout restart daemonset.apps/csi-nodeplugin-sshfs statefulset.apps/csi-controller-sshfs
+# kubectl -n csi-sshfs rollout restart daemonset.apps/csi-nodeplugin-sshfs deployment.apps/csi-controller-sshfs
 # kubectl -n csi-sshfs logs -llog_group=csi-sshfs -f --all-containers --prefix --tail=-1
 # dlv connect 192.168.8.41:31041
 # dlv connect 192.168.8.41:31040
@@ -103,5 +103,20 @@ add external-provisioner?
 another option:
 Create a single binary that only satisfies Node plugin. A Node-only Plugin component supplies only the Node Service. Its GetPluginCapabilities RPC does not report the CONTROLLER_SERVICE capability.
 
+figure out what capabilities to report
+probably not getting many controller calls because I'm not adding more sidecars.
+
 need to handle the context objects correctly; probably the cause of the errors.
+
+nfs one doesn't seem to use ctx: https://github.com/kubernetes-csi/csi-driver-nfs/blob/master/pkg/nfs/nodeserver.go
+https://github.com/kubernetes-csi/csi-driver-nfs/issues/70#issuecomment-714845727
+https://github.com/kubernetes-csi/csi-driver-smb/blob/master/pkg/smb/nodeserver.go
+
+https://github.com/kubernetes-csi/livenessprobe
+https://github.com/kubernetes-csi/external-snapshotter
+https://github.com/kubernetes-csi/external-resizer
+https://github.com/kubernetes-csi/external-health-monitor
+
+maybe this is all because I'm directly creating the pv and pvc in advance.
+
 ```

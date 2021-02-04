@@ -11,15 +11,15 @@ import (
 
 func NewDriverInstance(nodeID string, endpoint string) *DriverInstance {
 	klog.Infof("Starting new %s driver in version %s built %s", driverName, Version, BuildTime)
-	var vca []*csi.VolumeCapability_AccessMode
-	vca = append(vca, &csi.VolumeCapability_AccessMode{Mode: csi.VolumeCapability_AccessMode_MULTI_NODE_MULTI_WRITER})
+	var vc []*csi.VolumeCapability_AccessMode
+	vc = append(vc, &csi.VolumeCapability_AccessMode{Mode: csi.VolumeCapability_AccessMode_MULTI_NODE_MULTI_WRITER})
 
 	return &DriverInstance{
 		csiDriverName: driverName,
 		version:       Version,
 		nodeID:        nodeID,
 		endpoint:      endpoint,
-		vc:            vca,
+		vc:            vc,
 	}
 }
 
@@ -28,11 +28,10 @@ type DriverInstance struct {
 	version       string
 	nodeID        string
 	endpoint      string
-	vc            []*csi.VolumeCapability_AccessMode
+	vc            []*csi.VolumeCapability_AccessMode // TODO where is this used?
 }
 
 const (
-	//driverName = "csi-sshfs"
 	driverName = "co.p4t.csi.sshfs"
 )
 
@@ -44,7 +43,7 @@ var (
 func (di *DriverInstance) Run() { // TODO make this non-blocking again? non-blocking might be the issue?
 	srv := grpc.NewServer(grpc.UnaryInterceptor(logGRPC))
 	csi.RegisterIdentityServer(srv, NewIdentityServer(*di))
-	//csi.RegisterControllerServer(srv, NewControllerServer(*di))
+	csi.RegisterControllerServer(srv, NewControllerServer(*di))
 	csi.RegisterNodeServer(srv, NewNodeServer(*di))
 
 	proto, addr, err := ParseEndpoint(di.endpoint)
@@ -53,7 +52,7 @@ func (di *DriverInstance) Run() { // TODO make this non-blocking again? non-bloc
 	}
 	if proto == "unix" {
 		if err := os.Remove(addr); err != nil && !os.IsNotExist(err) {
-			klog.Fatalf("Failed to remove %s, error: %s", addr, err.Error()) // should this return?
+			klog.Fatalf("Failed to remove %s, error: %s", addr, err.Error())
 		}
 	}
 	listener, err := net.Listen(proto, addr)

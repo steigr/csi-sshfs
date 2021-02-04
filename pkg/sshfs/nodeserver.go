@@ -19,14 +19,14 @@ import (
 
 func NewNodeServer(driverInstance DriverInstance) *NodeServer {
 	return &NodeServer{
-		instance: &driverInstance,
-		mounts:   map[string]*mountPoint{},
+		Driver: &driverInstance,
+		mounts: map[string]*mountPoint{},
 	}
 }
 
 type NodeServer struct {
-	instance *DriverInstance
-	mounts   map[string]*mountPoint
+	Driver *DriverInstance
+	mounts map[string]*mountPoint
 }
 
 type mountPoint struct {
@@ -36,43 +36,43 @@ type mountPoint struct {
 }
 
 func (ns *NodeServer) NodeGetInfo(ctx context.Context, request *csi.NodeGetInfoRequest) (*csi.NodeGetInfoResponse, error) {
-	klog.V(5).Infof("Using default NodeGetInfo")
-
 	return &csi.NodeGetInfoResponse{
-		NodeId: ns.instance.nodeID, // TODO
+		NodeId: ns.Driver.nodeID,
 	}, nil
 }
 
 func (ns *NodeServer) NodeGetCapabilities(ctx context.Context, request *csi.NodeGetCapabilitiesRequest) (*csi.NodeGetCapabilitiesResponse, error) {
-	klog.V(5).Infof("Using default NodeGetCapabilities")
-
 	return &csi.NodeGetCapabilitiesResponse{
 		Capabilities: []*csi.NodeServiceCapability{
-			{
-				Type: &csi.NodeServiceCapability_Rpc{
-					Rpc: &csi.NodeServiceCapability_RPC{
-						Type: csi.NodeServiceCapability_RPC_UNKNOWN,
-					},
-				},
-			},
+			{Type: &csi.NodeServiceCapability_Rpc{Rpc: &csi.NodeServiceCapability_RPC{Type: csi.NodeServiceCapability_RPC_UNKNOWN}}},
 		},
 	}, nil
 }
 
 func (ns *NodeServer) NodePublishVolume(ctx context.Context, request *csi.NodePublishVolumeRequest) (*csi.NodePublishVolumeResponse, error) {
+	if request.GetVolumeCapability() == nil {
+		return nil, status.Error(codes.InvalidArgument, "Volume capability missing in request")
+	}
+	volumeID := request.GetVolumeId()
+	if len(volumeID) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "Volume ID missing in request")
+	}
 	targetPath := request.GetTargetPath()
-	notMnt, e := mount.New("").IsLikelyNotMountPoint(targetPath)
-	if e != nil {
-		if os.IsNotExist(e) {
+	if len(targetPath) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "Target path missing in request")
+	}
+
+	notMnt, err := mount.New("").IsLikelyNotMountPoint(targetPath) // TODO maybe me not reusing these is an issue?
+	if err != nil {
+		if os.IsNotExist(err) {
 			if err := os.MkdirAll(targetPath, 0750); err != nil {
 				return nil, status.Error(codes.Internal, err.Error())
 			}
 			notMnt = true
 		} else {
-			return nil, status.Error(codes.Internal, e.Error())
+			return nil, status.Error(codes.Internal, err.Error())
 		}
 	}
-
 	if !notMnt {
 		return &csi.NodePublishVolumeResponse{}, nil
 	}
@@ -81,8 +81,8 @@ func (ns *NodeServer) NodePublishVolume(ctx context.Context, request *csi.NodePu
 	if request.GetReadonly() {
 		mountOptions = append(mountOptions, "ro")
 	}
-	if e := validateVolumeContext(request); e != nil {
-		return nil, e
+	if err = validateVolumeContext(request); err != nil {
+		return nil, err
 	}
 
 	server := request.GetVolumeContext()["server"]
@@ -96,38 +96,45 @@ func (ns *NodeServer) NodePublishVolume(ctx context.Context, request *csi.NodePu
 	privateKey := request.GetVolumeContext()["privateKey"]
 	sshOpts := request.GetVolumeContext()["sshOpts"]
 
-	secret, e := getPublicKeySecret(privateKey)
-	if e != nil {
-		return nil, e
+	secret, err := getPublicKeySecret(privateKey)
+	if err != nil {
+		return nil, err
 	}
-	privateKeyPath, e := writePrivateKey(secret)
-	if e != nil {
-		return nil, e
+	privateKeyPath, err := writePrivateKey(secret)
+	if err != nil {
+		return nil, err
 	}
 
-	e = Mount(user, server, port, ep, targetPath, privateKeyPath, sshOpts)
-	if e != nil {
-		if os.IsPermission(e) {
-			return nil, status.Error(codes.PermissionDenied, e.Error())
+	err = Mount(user, server, port, ep, targetPath, privateKeyPath, sshOpts)
+	if err != nil {
+		if os.IsPermission(err) {
+			return nil, status.Error(codes.PermissionDenied, err.Error())
 		}
-		if strings.Contains(e.Error(), "invalid argument") {
-			return nil, status.Error(codes.InvalidArgument, e.Error())
+		if strings.Contains(err.Error(), "invalid argument") {
+			return nil, status.Error(codes.InvalidArgument, err.Error())
 		}
-		return nil, status.Error(codes.Internal, e.Error())
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 	ns.mounts[request.VolumeId] = &mountPoint{IdentityFile: privateKeyPath, MountPath: targetPath, VolumeId: request.VolumeId}
 	return &csi.NodePublishVolumeResponse{}, nil
 }
 
 func (ns *NodeServer) NodeUnpublishVolume(ctx context.Context, request *csi.NodeUnpublishVolumeRequest) (*csi.NodeUnpublishVolumeResponse, error) {
+	volumeID := request.GetVolumeId()
+	if len(volumeID) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "Volume ID missing in request")
+	}
 	targetPath := request.GetTargetPath()
-	notMnt, err := mount.New("").IsLikelyNotMountPoint(targetPath)
+	if len(targetPath) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "Target path missing in request")
+	}
+	notMnt, err := mount.New("").IsLikelyNotMountPoint(targetPath) // TODO same here
 
 	if err != nil {
 		if pathError, ok := err.(*os.PathError); ok {
 			// From the docs: [The NodeUnpublishVolume] operation MUST be idempotent. If this RPC failed, or the CO does not know if it failed or not, it can choose to call NodeUnpublishVolume again.
 			// Same for publishing actually.
-			klog.Infof("Volume may already be gone, %s: %s", (*pathError).Err.Error(), (*pathError).Path)
+			klog.Infof("Volume may already be gone, %s: %s", err.Error(), (*pathError).Path)
 		} else {
 			return nil, status.Error(codes.Internal, err.Error())
 		}
