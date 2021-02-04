@@ -15,10 +15,12 @@ import (
     "google.golang.org/grpc/codes"
     "google.golang.org/grpc/status"
     "k8s.io/mount-utils"
+
+    "github.com/Patricol/drivers/pkg/csi-common" // TODO create default servers here instead of importing this fork.
 )
 
-type NodeServer struct {
-    Driver *CSIDriver
+type nodeServer struct {
+    *csicommon.DefaultNodeServer
     mounts map[string]*mountPoint
 }
 
@@ -28,31 +30,31 @@ type mountPoint struct {
     IdentityFile string
 }
 
-func (ns *NodeServer) NodeGetInfo(ctx context.Context, req *csi.NodeGetInfoRequest) (*csi.NodeGetInfoResponse, error) {
-    klog.V(5).Infof("Using default NodeGetInfo")
+// func (ns *nodeServer) NodeGetInfo(ctx context.Context, req *csi.NodeGetInfoRequest) (*csi.NodeGetInfoResponse, error) {
+//     klog.V(5).Infof("Using default NodeGetInfo")
+//
+//     return &csi.NodeGetInfoResponse{
+//         NodeId: ns.Driver.nodeID,
+//     }, nil
+// }
+//
+// func (ns *nodeServer) NodeGetCapabilities(ctx context.Context, req *csi.NodeGetCapabilitiesRequest) (*csi.NodeGetCapabilitiesResponse, error) {
+//     klog.V(5).Infof("Using default NodeGetCapabilities")
+//
+//     return &csi.NodeGetCapabilitiesResponse{
+//         Capabilities: []*csi.NodeServiceCapability{
+//             {
+//                 Type: &csi.NodeServiceCapability_Rpc{
+//                     Rpc: &csi.NodeServiceCapability_RPC{
+//                         Type: csi.NodeServiceCapability_RPC_UNKNOWN,
+//                     },
+//                 },
+//             },
+//         },
+//     }, nil
+// }
 
-    return &csi.NodeGetInfoResponse{
-        NodeId: ns.Driver.nodeID,
-    }, nil
-}
-
-func (ns *NodeServer) NodeGetCapabilities(ctx context.Context, req *csi.NodeGetCapabilitiesRequest) (*csi.NodeGetCapabilitiesResponse, error) {
-    klog.V(5).Infof("Using default NodeGetCapabilities")
-
-    return &csi.NodeGetCapabilitiesResponse{
-        Capabilities: []*csi.NodeServiceCapability{
-            {
-                Type: &csi.NodeServiceCapability_Rpc{
-                    Rpc: &csi.NodeServiceCapability_RPC{
-                        Type: csi.NodeServiceCapability_RPC_UNKNOWN,
-                    },
-                },
-            },
-        },
-    }, nil
-}
-
-func (ns *NodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublishVolumeRequest) (*csi.NodePublishVolumeResponse, error) {
+func (ns *nodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublishVolumeRequest) (*csi.NodePublishVolumeResponse, error) {
     targetPath := req.GetTargetPath()
     notMnt, e := mount.New("").IsLikelyNotMountPoint(targetPath)
     if e != nil {
@@ -112,7 +114,7 @@ func (ns *NodeServer) NodePublishVolume(ctx context.Context, req *csi.NodePublis
     return &csi.NodePublishVolumeResponse{}, nil
 }
 
-func (ns *NodeServer) NodeUnpublishVolume(ctx context.Context, req *csi.NodeUnpublishVolumeRequest) (*csi.NodeUnpublishVolumeResponse, error) {
+func (ns *nodeServer) NodeUnpublishVolume(ctx context.Context, req *csi.NodeUnpublishVolumeRequest) (*csi.NodeUnpublishVolumeResponse, error) {
     targetPath := req.GetTargetPath()
     notMnt, err := mount.New("").IsLikelyNotMountPoint(targetPath)
 
@@ -145,21 +147,21 @@ func (ns *NodeServer) NodeUnpublishVolume(ctx context.Context, req *csi.NodeUnpu
     return &csi.NodeUnpublishVolumeResponse{}, nil
 }
 
-func (ns *NodeServer) NodeGetVolumeStats(ctx context.Context, in *csi.NodeGetVolumeStatsRequest) (*csi.NodeGetVolumeStatsResponse, error) {
-    klog.V(5).Infof("Called Unimplemented NodeGetVolumeStats")
-    return nil, status.Error(codes.Unimplemented, "")
-}
+// func (ns *nodeServer) NodeGetVolumeStats(ctx context.Context, in *csi.NodeGetVolumeStatsRequest) (*csi.NodeGetVolumeStatsResponse, error) {
+//     klog.V(5).Infof("Called Unimplemented NodeGetVolumeStats")
+//     return nil, status.Error(codes.Unimplemented, "")
+// }
+//
+// func (ns *nodeServer) NodeExpandVolume(ctx context.Context, in *csi.NodeExpandVolumeRequest) (*csi.NodeExpandVolumeResponse, error) {
+//     klog.V(5).Infof("Called Unimplemented NodeExpandVolume")
+//     return nil, status.Error(codes.Unimplemented, "")
+// }
 
-func (ns *NodeServer) NodeExpandVolume(ctx context.Context, in *csi.NodeExpandVolumeRequest) (*csi.NodeExpandVolumeResponse, error) {
-    klog.V(5).Infof("Called Unimplemented NodeExpandVolume")
-    return nil, status.Error(codes.Unimplemented, "")
-}
-
-func (ns *NodeServer) NodeUnstageVolume(ctx context.Context, req *csi.NodeUnstageVolumeRequest) (*csi.NodeUnstageVolumeResponse, error) {
+func (ns *nodeServer) NodeUnstageVolume(ctx context.Context, req *csi.NodeUnstageVolumeRequest) (*csi.NodeUnstageVolumeResponse, error) {
     return &csi.NodeUnstageVolumeResponse{}, nil
 }
 
-func (ns *NodeServer) NodeStageVolume(ctx context.Context, req *csi.NodeStageVolumeRequest) (*csi.NodeStageVolumeResponse, error) {
+func (ns *nodeServer) NodeStageVolume(ctx context.Context, req *csi.NodeStageVolumeRequest) (*csi.NodeStageVolumeResponse, error) {
     return &csi.NodeStageVolumeResponse{}, nil
 }
 
