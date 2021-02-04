@@ -75,7 +75,7 @@ spec:
       claimName: data-sshfs
 ```
 ```
-# kubectl -n csi-sshfs rollout restart daemonset.apps/csi-nodeplugin-sshfs daemonset.apps/csi-controller-sshfs
+# kubectl -n csi-sshfs rollout restart daemonset.apps/csi-nodeplugin-sshfs statefulset.apps/csi-controller-sshfs
 # kubectl -n csi-sshfs logs -llog_group=csi-sshfs -f --all-containers --prefix --tail=-1
 # dlv connect 192.168.8.41:31041
 # dlv connect 192.168.8.41:31040
@@ -90,4 +90,18 @@ spec:
 # grpc types are probably wrong. single vs list. got a double once.
 # kk it's like 100% the go packages being pinned.
 TODO add more things from the spec: https://github.com/container-storage-interface/spec/releases
+// NodePublishVolume only gets one request to publish, even when multiple should be.
+need to debug the default driver thing I'm importing. that's likely causing the issue; out of date code etc.
+Test if other csi pvcs give me the same issue
+https://arslan.io/2018/06/21/how-to-write-a-container-storage-interface-csi-plugin/
+Or it's all the unimplemented methods in the defaults I imported? should have them all log.
+Looks like I can avoid it totally: https://github.com/kubernetes-csi/drivers/issues/159
+both node and controller plugins need to also implement the Identity interface individually; unless Node and Controller are done in one binary. like this does.
+How does the controller one know to act like a controller and not node? because of the sidecar containers.
+Ensure everything is idempotent. check first if things exist before creating?
+add external-provisioner?
+another option:
+Create a single binary that only satisfies Node plugin. A Node-only Plugin component supplies only the Node Service. Its GetPluginCapabilities RPC does not report the CONTROLLER_SERVICE capability.
+
+need to handle the context objects correctly; probably the cause of the errors.
 ```

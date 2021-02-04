@@ -3,9 +3,8 @@ module github.com/Patricol/csi-sshfs
 go 1.15
 
 require (
-	github.com/Patricol/drivers v1.0.3
 	github.com/container-storage-interface/spec v1.3.0
-	github.com/kubernetes-csi/csi-lib-utils v0.9.0 // indirect
+	github.com/kubernetes-csi/csi-lib-utils v0.9.0
 	github.com/spf13/cobra v1.1.1
 	google.golang.org/genproto v0.0.0-20201110150050-8816d57aaa9a // indirect
 	google.golang.org/grpc v1.35.0
