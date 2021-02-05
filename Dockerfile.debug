@@ -9,8 +9,7 @@ COPY . .
 RUN go get ./...
 
 RUN export BUILD_TIME=$(date -R) \
- && export VERSION=$(cat /go/src/github.com/Patricol/csi-sshfs/version.txt 2&> /dev/null) \
- && go build -o /csi-sshfs -ldflags "-X 'github.com/Patricol/csi-sshfs/pkg/sshfs.BuildTime=${BUILD_TIME}' -X 'github.com/Patricol/csi-sshfs/pkg/sshfs.Version=${VERSION}'" -gcflags "all=-N -l" github.com/Patricol/csi-sshfs/cmd/csi-sshfs
+ && go build -o /csi-sshfs -ldflags "-X 'github.com/Patricol/csi-sshfs/pkg/sshfs.BuildTime=${BUILD_TIME}'" -gcflags "all=-N -l" github.com/Patricol/csi-sshfs/cmd/csi-sshfs
 
 FROM alpine:latest
 EXPOSE 40000

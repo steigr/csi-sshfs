@@ -19,7 +19,10 @@ func NewDriverInstance(nodeID string, endpoint string) *DriverInstance {
 		version:       Version,
 		nodeID:        nodeID,
 		endpoint:      endpoint,
-		vc:            vc,
+		capPlugin:     capPlugin,
+		capController: capController,
+		capNode:       capNode,
+		capVolume:     capVolume,
 	}
 }
 
@@ -28,15 +31,14 @@ type DriverInstance struct {
 	version       string
 	nodeID        string
 	endpoint      string
-	vc            []*csi.VolumeCapability_AccessMode // TODO where is this used?
+	capPlugin     []*csi.PluginCapability
+	capController []*csi.ControllerServiceCapability
+	capNode       []*csi.NodeServiceCapability
+	capVolume     []*csi.VolumeCapability_AccessMode // TODO where is this used?
 }
 
-const (
-	driverName = "co.p4t.csi.sshfs"
-)
-
 var (
-	Version   = "latest"
+	Version   = "0.2.0"
 	BuildTime = "1970-01-01 00:00:00"
 )
 
