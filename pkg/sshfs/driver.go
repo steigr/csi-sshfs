@@ -57,7 +57,7 @@ type DriverInstance struct {
 }
 
 var (
-	Version   = "0.2.0"
+	Version   = "0.2.1"
 	BuildTime = "1970-01-01 00:00:00"
 )
 
