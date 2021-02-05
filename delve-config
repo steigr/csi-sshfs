@@ -1,3 +1,4 @@
+# "source delve-config"
 clearall
 config max-string-len 1024
 b sshfs.(*nodeServer).NodePublishVolume
@@ -8,9 +9,7 @@ b sshfs.(*nodeServer).NodeStageVolume
 #b sshfs.getPublicKeySecret
 #b sshfs.writePrivateKey
 #b sshfs.Mount
-#b sshfs.GetK8sClient
 #b sshfs.NewDriver
 #b sshfs.NewNodeServer
 #b sshfs.(*driver).Run
 #b main.main
-#b main.handle
