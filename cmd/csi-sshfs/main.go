@@ -7,19 +7,20 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"k8s.io/klog/v2"
+	"os"
 )
 
 var (
 	endpoint                          string
 	nodeID                            string
+	driverName                        string
 	runWithNoControllerServiceSupport bool
-	driverName                        = "co.p4t.csi.sshfs" // TODO use this downstream
 
 	rootCmd = &cobra.Command{
 		Use:   "csi-sshfs",
 		Short: "CSI based SSHFS driver",
 		Run: func(cmd *cobra.Command, args []string) {
-			sshfs.NewDriverInstance(nodeID, endpoint).Run()
+			sshfs.NewDriverInstance(endpoint, nodeID, driverName, runWithNoControllerServiceSupport).Run()
 		},
 	}
 )
@@ -27,11 +28,10 @@ var (
 func init() {
 	rootCmd.Flags().SortFlags = false
 
-	rootCmd.Flags().StringVar(&nodeID, "nodeid", "", "node id")
-	rootCmd.MarkFlagRequired("nodeid")
-
 	rootCmd.Flags().StringVar(&endpoint, "endpoint", "", "CSI endpoint")
-	rootCmd.MarkFlagRequired("endpoint")
+	rootCmd.Flags().StringVar(&nodeID, "nodeid", "", "node id")
+	rootCmd.Flags().StringVar(&endpoint, "csi-driver-name", "co.p4t.csi.sshfs", "csi-driver name this will report")
+	rootCmd.Flags().BoolVar(&runWithNoControllerServiceSupport, "disable-controller-support", false, "only enable if no controller pod will exist")
 
 	rootCmd.AddCommand(VersionCmd())
 
@@ -41,9 +41,17 @@ func init() {
 }
 
 func main() {
-	//	rootCmd.ParseFlags(os.Args[1:])
+	if err := rootCmd.MarkFlagRequired("endpoint"); err != nil {
+		klog.Fatalf("requiring --endpoint: %s", err)
+	}
+	if err := rootCmd.MarkFlagRequired("nodeid"); err != nil {
+		klog.Fatalf("requiring --nodeid: %s", err)
+	}
+	if err := rootCmd.ParseFlags(os.Args[1:]); err != nil {
+		klog.Fatalf("parsing flags: %s", err)
+	}
 	if err := rootCmd.Execute(); err != nil {
-		klog.Fatalf("root cmd execute failed, err=%v", err)
+		klog.Exitf("root cmd execute failed, err=%v", err)
 	}
 }
 

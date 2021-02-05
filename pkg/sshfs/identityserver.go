@@ -23,11 +23,7 @@ func (ids *IdentityServer) GetPluginInfo(ctx context.Context, request *csi.GetPl
 }
 
 func (ids *IdentityServer) GetPluginCapabilities(ctx context.Context, request *csi.GetPluginCapabilitiesRequest) (*csi.GetPluginCapabilitiesResponse, error) {
-	return &csi.GetPluginCapabilitiesResponse{
-		Capabilities: []*csi.PluginCapability{
-			{Type: &csi.PluginCapability_Service_{Service: &csi.PluginCapability_Service{Type: csi.PluginCapability_Service_CONTROLLER_SERVICE}}}, // NOTE: don't report controller service if no controller
-		},
-	}, nil
+	return &csi.GetPluginCapabilitiesResponse{Capabilities: ids.Driver.capPlugin}, nil
 }
 
 func (ids *IdentityServer) Probe(ctx context.Context, request *csi.ProbeRequest) (*csi.ProbeResponse, error) {

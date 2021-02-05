@@ -9,10 +9,29 @@ import (
 	"os"
 )
 
-func NewDriverInstance(nodeID string, endpoint string) *DriverInstance {
+func NewDriverInstance(endpoint string, nodeID string, driverName string, runWithNoControllerServiceSupport bool) *DriverInstance {
 	klog.Infof("Starting new %s driver in version %s built %s", driverName, Version, BuildTime)
-	var vc []*csi.VolumeCapability_AccessMode
-	vc = append(vc, &csi.VolumeCapability_AccessMode{Mode: csi.VolumeCapability_AccessMode_MULTI_NODE_MULTI_WRITER})
+	var capPlugin []*csi.PluginCapability
+	var capController []*csi.ControllerServiceCapability
+	if !runWithNoControllerServiceSupport {
+		capPlugin = []*csi.PluginCapability{
+			{Type: &csi.PluginCapability_Service_{Service: &csi.PluginCapability_Service{Type: csi.PluginCapability_Service_CONTROLLER_SERVICE}}},
+		}
+		capController = []*csi.ControllerServiceCapability{
+			{Type: &csi.ControllerServiceCapability_Rpc{Rpc: &csi.ControllerServiceCapability_RPC{Type: csi.ControllerServiceCapability_RPC_CREATE_DELETE_VOLUME}}},
+			{Type: &csi.ControllerServiceCapability_Rpc{Rpc: &csi.ControllerServiceCapability_RPC{Type: csi.ControllerServiceCapability_RPC_PUBLISH_UNPUBLISH_VOLUME}}},
+			{Type: &csi.ControllerServiceCapability_Rpc{Rpc: &csi.ControllerServiceCapability_RPC{Type: csi.ControllerServiceCapability_RPC_LIST_VOLUMES}}},
+			//{Type: &csi.ControllerServiceCapability_Rpc{Rpc: &csi.ControllerServiceCapability_RPC{Type: csi.ControllerServiceCapability_RPC_GET_CAPACITY}}},
+			//{Type: &csi.ControllerServiceCapability_Rpc{Rpc: &csi.ControllerServiceCapability_RPC{Type: csi.ControllerServiceCapability_RPC_PUBLISH_READONLY}}},
+			// https://github.com/container-storage-interface/spec/blob/396c3332ca1216dea620f64f5f2d60686ae9a0a5/lib/go/csi/csi.pb.go#L183
+		}
+	}
+	capNode := []*csi.NodeServiceCapability{
+		{Type: &csi.NodeServiceCapability_Rpc{Rpc: &csi.NodeServiceCapability_RPC{Type: csi.NodeServiceCapability_RPC_UNKNOWN}}},
+	}
+	capVolume := []*csi.VolumeCapability_AccessMode{
+		{Mode: csi.VolumeCapability_AccessMode_MULTI_NODE_MULTI_WRITER},
+	}
 
 	return &DriverInstance{
 		csiDriverName: driverName,

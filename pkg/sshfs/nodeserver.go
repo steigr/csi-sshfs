@@ -42,11 +42,7 @@ func (ns *NodeServer) NodeGetInfo(ctx context.Context, request *csi.NodeGetInfoR
 }
 
 func (ns *NodeServer) NodeGetCapabilities(ctx context.Context, request *csi.NodeGetCapabilitiesRequest) (*csi.NodeGetCapabilitiesResponse, error) {
-	return &csi.NodeGetCapabilitiesResponse{
-		Capabilities: []*csi.NodeServiceCapability{
-			{Type: &csi.NodeServiceCapability_Rpc{Rpc: &csi.NodeServiceCapability_RPC{Type: csi.NodeServiceCapability_RPC_UNKNOWN}}},
-		},
-	}, nil
+	return &csi.NodeGetCapabilitiesResponse{Capabilities: ns.Driver.capNode}, nil
 }
 
 func (ns *NodeServer) NodePublishVolume(ctx context.Context, request *csi.NodePublishVolumeRequest) (*csi.NodePublishVolumeResponse, error) {
