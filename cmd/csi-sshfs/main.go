@@ -4,64 +4,60 @@ import (
 	"flag"
 	"fmt"
 	"github.com/Patricol/csi-sshfs/pkg/sshfs"
-	"k8s.io/klog/v2"
-	"os"
-
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
+	"k8s.io/klog/v2"
 )
 
 var (
-	endpoint string
-	nodeID   string
-)
+	endpoint                          string
+	nodeID                            string
+	runWithNoControllerServiceSupport bool
+	driverName                        = "co.p4t.csi.sshfs" // TODO use this downstream
 
-func main() {
-	klogFlags := flag.NewFlagSet("klog", flag.ExitOnError)
-	klogFlags.Set("logtostderr", "true")
-	klog.InitFlags(klogFlags)
-
-	flag.CommandLine.Parse([]string{})
-
-	cmd := &cobra.Command{
-		Use:   "sshfs",
+	rootCmd = &cobra.Command{
+		Use:   "csi-sshfs",
 		Short: "CSI based SSHFS driver",
 		Run: func(cmd *cobra.Command, args []string) {
-			handle()
+			sshfs.NewDriverInstance(nodeID, endpoint).Run()
 		},
 	}
+)
 
-	cmd.Flags().AddGoFlagSet(flag.CommandLine)
+func init() {
+	rootCmd.Flags().SortFlags = false
 
-	cmd.PersistentFlags().StringVar(&nodeID, "nodeid", "", "node id")
-	cmd.MarkPersistentFlagRequired("nodeid")
+	rootCmd.Flags().StringVar(&nodeID, "nodeid", "", "node id")
+	rootCmd.MarkFlagRequired("nodeid")
 
-	cmd.PersistentFlags().StringVar(&endpoint, "endpoint", "", "CSI endpoint")
-	cmd.MarkPersistentFlagRequired("endpoint")
+	rootCmd.Flags().StringVar(&endpoint, "endpoint", "", "CSI endpoint")
+	rootCmd.MarkFlagRequired("endpoint")
 
-	versionCmd := &cobra.Command{
-		Use:   "version",
-		Short: "Prints information about this version of csi sshfs plugin",
-		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Printf(`CSI-SSHFS Plugin
-Version:    %s
-Build Time: %s
-`, sshfs.Version, sshfs.BuildTime)
-		},
-	}
+	rootCmd.AddCommand(VersionCmd())
 
-	cmd.AddCommand(versionCmd)
-	versionCmd.ResetFlags()
-
-	cmd.ParseFlags(os.Args[1:])
-	if err := cmd.Execute(); err != nil {
-		fmt.Fprintf(os.Stderr, "%s", err.Error())
-		os.Exit(1)
-	}
-
-	os.Exit(0)
+	klog.InitFlags(nil)
+	flag.Parse()
+	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
 }
 
-func handle() {
-	di := sshfs.NewDriverInstance(nodeID, endpoint)
-	di.Run()
+func main() {
+	//	rootCmd.ParseFlags(os.Args[1:])
+	if err := rootCmd.Execute(); err != nil {
+		klog.Fatalf("root cmd execute failed, err=%v", err)
+	}
+}
+
+func VersionCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "version",
+		Short: "Get name/version/build of this plugin",
+		Run: func(cmd *cobra.Command, args []string) {
+			fmt.Printf("Plugin Name: %s\n", driverName)
+			fmt.Printf("Version:     %s\n", sshfs.Version)
+			fmt.Printf("Build Time:  %s\n", sshfs.BuildTime)
+		},
+	}
+	cmd.Flags().SortFlags = false
+	cmd.ResetFlags()
+	return cmd
 }
