@@ -5,9 +5,7 @@ import (
 	"fmt"
 	"github.com/Patricol/csi-sshfs/pkg/sshfs"
 	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
 	"k8s.io/klog/v2"
-	"os"
 )
 
 var (
@@ -19,40 +17,44 @@ var (
 	rootCmd = &cobra.Command{
 		Use:   "csi-sshfs",
 		Short: "CSI based SSHFS driver",
-		Run: func(cmd *cobra.Command, args []string) {
-			sshfs.NewDriverInstance(endpoint, nodeID, driverName, runWithNoControllerServiceSupport).Run()
-		},
 	}
 )
 
 func init() {
 	rootCmd.Flags().SortFlags = false
-
-	rootCmd.Flags().StringVar(&endpoint, "endpoint", "", "CSI endpoint")
-	rootCmd.Flags().StringVar(&nodeID, "nodeid", "", "node id")
-	rootCmd.Flags().StringVar(&endpoint, "csi-driver-name", "co.p4t.csi.sshfs", "csi-driver name this will report")
-	rootCmd.Flags().BoolVar(&runWithNoControllerServiceSupport, "disable-controller-support", false, "only enable if no controller pod will exist")
-
+	rootCmd.AddCommand(RunCmd())
 	rootCmd.AddCommand(VersionCmd())
-
-	klog.InitFlags(nil)
-	flag.Parse()
-	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
 }
 
 func main() {
-	if err := rootCmd.MarkFlagRequired("endpoint"); err != nil {
-		klog.Fatalf("requiring --endpoint: %s", err)
-	}
-	if err := rootCmd.MarkFlagRequired("nodeid"); err != nil {
-		klog.Fatalf("requiring --nodeid: %s", err)
-	}
-	if err := rootCmd.ParseFlags(os.Args[1:]); err != nil {
-		klog.Fatalf("parsing flags: %s", err)
-	}
+	flag.Parse()
 	if err := rootCmd.Execute(); err != nil {
 		klog.Exitf("root cmd execute failed, err=%v", err)
 	}
+}
+
+func RunCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "run",
+		Short: "Run the plugin",
+		Run: func(cmd *cobra.Command, args []string) {
+			sshfs.NewDriverInstance(endpoint, nodeID, driverName, runWithNoControllerServiceSupport).Run()
+		},
+	}
+	cmd.Flags().SortFlags = false
+	cmd.Flags().StringVar(&endpoint, "endpoint", "", "CSI endpoint")
+	cmd.Flags().StringVar(&nodeID, "nodeid", "", "node id")
+	cmd.Flags().StringVar(&driverName, "csi-driver-name", "co.p4t.csi.sshfs", "csi-driver name this will report")
+	cmd.Flags().BoolVar(&runWithNoControllerServiceSupport, "disable-controller-support", false, "only enable if no controller pod will exist")
+	if err := cmd.MarkFlagRequired("endpoint"); err != nil {
+		klog.Fatalf("requiring --endpoint: %s", err)
+	}
+	if err := cmd.MarkFlagRequired("nodeid"); err != nil {
+		klog.Fatalf("requiring --nodeid: %s", err)
+	}
+	klog.InitFlags(nil)
+	cmd.Flags().AddGoFlagSet(flag.CommandLine)
+	return cmd
 }
 
 func VersionCmd() *cobra.Command {

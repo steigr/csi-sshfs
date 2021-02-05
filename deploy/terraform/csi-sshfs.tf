@@ -175,6 +175,7 @@ resource "kubernetes_deployment" "csi_controller_sshfs" {
           image = "patricol/csi-sshfs:${local.csi-sshfs_image_tag}"
           image_pull_policy = "Always"
           args = [
+            "run",
             "-v=${local.log_level}",
             "--nodeid=$(NODE_ID)",
             "--endpoint=$(CSI_ENDPOINT)",
@@ -365,6 +366,7 @@ resource "kubernetes_daemonset" "csi_nodeplugin_sshfs" {
           image = "patricol/csi-sshfs:${local.csi-sshfs_image_tag}"
           image_pull_policy = "Always"
           args = compact([
+            "run",
             "-v=${local.log_level}",
             "--nodeid=$(NODE_ID)",
             "--endpoint=$(CSI_ENDPOINT)",

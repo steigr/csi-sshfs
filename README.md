@@ -96,8 +96,6 @@ https://github.com/kubernetes-csi/external-snapshotter
 https://github.com/kubernetes-csi/external-resizer
 https://github.com/kubernetes-csi/external-health-monitor
 
-get klog args out of "csi-sshfs help version" and "csi-sshfs help help"
-
 https://kubernetes.io/blog/2020/12/18/kubernetes-1.20-pod-impersonation-short-lived-volumes-in-csi/
 https://kubernetes.io/blog/2020/01/08/testing-of-csi-drivers/
 https://kubernetes.io/blog/2020/01/21/csi-ephemeral-inline-volumes/

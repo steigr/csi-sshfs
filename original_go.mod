@@ -4,7 +4,6 @@ require (
 	github.com/container-storage-interface/spec v1.3.0
 	github.com/kubernetes-csi/csi-lib-utils v0.9.0
 	github.com/spf13/cobra v1.1.1
-	github.com/spf13/pflag v1.0.5
 	google.golang.org/grpc v1.35.0
 	k8s.io/api v0.20.2
 	k8s.io/apimachinery v0.20.2
