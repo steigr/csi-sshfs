@@ -1,0 +1,14 @@
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: {{ include ( printf "%s.%s" .Chart.Name "fullname" ) . }}-controller:registrar
+  labels:
+    {{- include ( printf "%s.%s" .Chart.Name "labels" ) . | nindent 4 }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ include ( printf "%s.%s" .Chart.Name "fullname" ) . }}-controller
+    namespace: {{ .Release.Namespace }}
+roleRef:
+  kind: ClusterRole
+  name: {{ include ( printf "%s.%s" .Chart.Name "fullname" ) . }}-controller:registrar
+  apiGroup: rbac.authorization.k8s.io
