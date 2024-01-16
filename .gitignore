@@ -40,3 +40,4 @@ fabric.properties
 *.test
 *.out
 example/kubernetes/id_*
+/csi-sshfs
