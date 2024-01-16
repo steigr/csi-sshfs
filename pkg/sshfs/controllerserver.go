@@ -5,6 +5,7 @@ import (
 	"github.com/container-storage-interface/spec/lib/go/csi"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"k8s.io/klog/v2"
 )
 
 func NewControllerServer(driverInstance DriverInstance) *ControllerServer {
@@ -17,6 +18,10 @@ type ControllerServer struct {
 	Driver *DriverInstance
 }
 
+func (cs *ControllerServer) ControllerModifyVolume(ctx context.Context, request *csi.ControllerModifyVolumeRequest) (*csi.ControllerModifyVolumeResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "")
+}
+
 func (cs *ControllerServer) CreateVolume(ctx context.Context, request *csi.CreateVolumeRequest) (*csi.CreateVolumeResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "")
 }
@@ -26,11 +31,13 @@ func (cs *ControllerServer) DeleteVolume(ctx context.Context, request *csi.Delet
 }
 
 func (cs *ControllerServer) ControllerPublishVolume(ctx context.Context, request *csi.ControllerPublishVolumeRequest) (*csi.ControllerPublishVolumeResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "")
+	klog.Infof("publish called for volume %s", request.VolumeId)
+	return &csi.ControllerPublishVolumeResponse{}, nil
 }
 
 func (cs *ControllerServer) ControllerUnpublishVolume(ctx context.Context, request *csi.ControllerUnpublishVolumeRequest) (*csi.ControllerUnpublishVolumeResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "")
+	klog.Infof("unpublish called for volume %s", request.VolumeId)
+	return &csi.ControllerUnpublishVolumeResponse{}, nil
 }
 
 func (cs *ControllerServer) ValidateVolumeCapabilities(ctx context.Context, request *csi.ValidateVolumeCapabilitiesRequest) (*csi.ValidateVolumeCapabilitiesResponse, error) {

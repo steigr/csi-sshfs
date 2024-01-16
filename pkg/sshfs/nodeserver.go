@@ -2,6 +2,7 @@ package sshfs
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"k8s.io/api/core/v1"
@@ -127,12 +128,11 @@ func (ns *NodeServer) NodeUnpublishVolume(ctx context.Context, request *csi.Node
 	notMnt, err := mount.New("").IsLikelyNotMountPoint(targetPath) // TODO same here
 
 	if err != nil {
-		if pathError, ok := err.(*os.PathError); ok {
+		var pathError *os.PathError
+		if errors.As(err, &pathError) {
 			// From the docs: [The NodeUnpublishVolume] operation MUST be idempotent. If this RPC failed, or the CO does not know if it failed or not, it can choose to call NodeUnpublishVolume again.
-			// Same for publishing actually.
+			// Same for publishing, actually.
 			klog.Infof("Volume may already be gone, %s: %s", err.Error(), (*pathError).Path)
-		} else {
-			return nil, status.Error(codes.Internal, err.Error())
 		}
 	}
 	if notMnt {
@@ -160,7 +160,9 @@ func (ns *NodeServer) NodeGetVolumeStats(ctx context.Context, request *csi.NodeG
 }
 
 func (ns *NodeServer) NodeExpandVolume(ctx context.Context, request *csi.NodeExpandVolumeRequest) (*csi.NodeExpandVolumeResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "")
+	return &csi.NodeExpandVolumeResponse{
+		CapacityBytes: request.GetCapacityRange().RequiredBytes,
+	}, nil
 }
 
 func (ns *NodeServer) NodeUnstageVolume(ctx context.Context, request *csi.NodeUnstageVolumeRequest) (*csi.NodeUnstageVolumeResponse, error) {

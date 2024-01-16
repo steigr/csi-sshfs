@@ -21,9 +21,10 @@ func NewDriverInstance(endpoint string, nodeID string, driverName string, runWit
 			{Type: &csi.ControllerServiceCapability_Rpc{Rpc: &csi.ControllerServiceCapability_RPC{Type: csi.ControllerServiceCapability_RPC_CREATE_DELETE_VOLUME}}},
 			{Type: &csi.ControllerServiceCapability_Rpc{Rpc: &csi.ControllerServiceCapability_RPC{Type: csi.ControllerServiceCapability_RPC_PUBLISH_UNPUBLISH_VOLUME}}},
 			{Type: &csi.ControllerServiceCapability_Rpc{Rpc: &csi.ControllerServiceCapability_RPC{Type: csi.ControllerServiceCapability_RPC_LIST_VOLUMES}}},
-			//{Type: &csi.ControllerServiceCapability_Rpc{Rpc: &csi.ControllerServiceCapability_RPC{Type: csi.ControllerServiceCapability_RPC_GET_CAPACITY}}},
-			//{Type: &csi.ControllerServiceCapability_Rpc{Rpc: &csi.ControllerServiceCapability_RPC{Type: csi.ControllerServiceCapability_RPC_PUBLISH_READONLY}}},
-			// https://github.com/container-storage-interface/spec/blob/396c3332ca1216dea620f64f5f2d60686ae9a0a5/lib/go/csi/csi.pb.go#L183
+			{Type: &csi.ControllerServiceCapability_Rpc{Rpc: &csi.ControllerServiceCapability_RPC{Type: csi.ControllerServiceCapability_RPC_GET_CAPACITY}}},
+			{Type: &csi.ControllerServiceCapability_Rpc{Rpc: &csi.ControllerServiceCapability_RPC{Type: csi.ControllerServiceCapability_RPC_PUBLISH_READONLY}}},
+			{Type: &csi.ControllerServiceCapability_Rpc{Rpc: &csi.ControllerServiceCapability_RPC{Type: csi.ControllerServiceCapability_RPC_EXPAND_VOLUME}}},
+			{Type: &csi.ControllerServiceCapability_Rpc{Rpc: &csi.ControllerServiceCapability_RPC{Type: csi.ControllerServiceCapability_RPC_SINGLE_NODE_MULTI_WRITER}}},
 		}
 	}
 	capNode := []*csi.NodeServiceCapability{
@@ -61,7 +62,7 @@ var (
 	BuildTime = "1970-01-01 00:00:00"
 )
 
-func (di *DriverInstance) Run() { // TODO make this non-blocking again? non-blocking might be the issue?
+func (di *DriverInstance) Run() error {
 	srv := grpc.NewServer(grpc.UnaryInterceptor(logGRPC))
 	csi.RegisterIdentityServer(srv, NewIdentityServer(*di))
 	csi.RegisterControllerServer(srv, NewControllerServer(*di))
@@ -78,9 +79,9 @@ func (di *DriverInstance) Run() { // TODO make this non-blocking again? non-bloc
 	}
 	listener, err := net.Listen(proto, addr)
 	if err != nil {
-		fmt.Errorf("failed to listen: %v", err) // TODO this should return.
+		return fmt.Errorf("failed to listen: %v", err)
 	}
 
 	klog.Infof("Listening for connections on address: %#v", listener.Addr())
-	srv.Serve(listener)
+	return srv.Serve(listener)
 }

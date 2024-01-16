@@ -3,16 +3,16 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/Patricol/csi-sshfs/pkg/sshfs"
 	"github.com/spf13/cobra"
+	"github.com/steigr/csi-sshfs/pkg/sshfs"
 	"k8s.io/klog/v2"
 )
 
 var (
-	endpoint                          string
-	nodeID                            string
-	driverName                        string
-	runWithNoControllerServiceSupport bool
+	endpoint                          = ""
+	nodeID                            = ""
+	driverName                        = "csi.sshfs.io"
+	runWithNoControllerServiceSupport = false
 
 	rootCmd = &cobra.Command{
 		Use:   "csi-sshfs",
@@ -38,14 +38,16 @@ func RunCmd() *cobra.Command {
 		Use:   "run",
 		Short: "Run the plugin",
 		Run: func(cmd *cobra.Command, args []string) {
-			sshfs.NewDriverInstance(endpoint, nodeID, driverName, runWithNoControllerServiceSupport).Run()
+			if err := sshfs.NewDriverInstance(endpoint, nodeID, driverName, runWithNoControllerServiceSupport).Run(); err != nil {
+				klog.Fatalf("failed to run driver: %s", err)
+			}
 		},
 	}
 	cmd.Flags().SortFlags = false
-	cmd.Flags().StringVar(&endpoint, "endpoint", "", "CSI endpoint")
-	cmd.Flags().StringVar(&nodeID, "nodeid", "", "node id")
-	cmd.Flags().StringVar(&driverName, "csi-driver-name", "co.p4t.csi.sshfs", "csi-driver name this will report")
-	cmd.Flags().BoolVar(&runWithNoControllerServiceSupport, "disable-controller-support", false, "only enable if no controller pod will exist")
+	cmd.Flags().StringVar(&endpoint, "endpoint", endpoint, "CSI endpoint")
+	cmd.Flags().StringVar(&nodeID, "nodeid", nodeID, "node id")
+	cmd.Flags().StringVar(&driverName, "csi-driver-name", driverName, "csi-driver name this will report")
+	cmd.Flags().BoolVar(&runWithNoControllerServiceSupport, "disable-controller-support", runWithNoControllerServiceSupport, "only enable if no controller pod will exist")
 	if err := cmd.MarkFlagRequired("endpoint"); err != nil {
 		klog.Fatalf("requiring --endpoint: %s", err)
 	}
