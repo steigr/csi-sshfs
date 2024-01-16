@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: backup
+  labels:
+    csi.sshfs.io/remote: backup
+spec:
+  accessModes:
+    - ReadWriteMany
+  capacity:
+    storage: 10Gi
+  storageClassName: csi-sshfs
+  csi:
+    driver: csi.sshfs.io
+    volumeHandle: backup
+    volumeAttributes:
+      server: backup.example.com
+      port: "22"
+      user: backup
+      share: /backups
+      privateKey: default/demo-ssh-identity

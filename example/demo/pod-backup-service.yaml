@@ -1,0 +1,24 @@
+---
+kind: Pod
+apiVersion: v1
+metadata:
+  name: backup-service
+  namespace: default
+spec:
+  enableServiceLinks: false
+  automountServiceAccountToken: false
+  terminationGracePeriodSeconds: 0
+  containers:
+    - name: backup-service
+      image: library/busybox:latest
+      imagePullPolicy: Always
+      command:
+        - sleep
+        - inf
+      volumeMounts:
+        - name: backup
+          mountPath: /backup
+  volumes:
+    - name: backup
+      persistentVolumeClaim:
+        claimName: backup
